@@ -1,0 +1,9 @@
+*node_modules/
+*.tscache/
+*.vs/
+screeps.json
+dist/
+build/
+npm*/
+.rpt2_cache/
+package-lock.json
