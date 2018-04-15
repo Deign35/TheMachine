@@ -30,7 +30,7 @@ declare class Scheduler {
     wakeSleepingProcesses(): void;
     shift(): void;
     getNextProcess(): number;
-    launchProcess(name: string, data: any, parent: number): void;
+    launchProcess(name: string, data: any, parent?: number): void;
     getNextPid(): number;
     isPidActive(pid: number): boolean;
     kill(pid: number): void;

@@ -1,4 +1,4 @@
-export class Process {
+export abstract class Process {
     private priority?: number;
     constructor(public pid: number, public name: string, public data: any, public parent: string) {
     }
@@ -38,8 +38,8 @@ export class Process {
         if (this.data.children[label]) {
             return true
         }
-        this.data.children[label] = kernel.scheduler.launchProcess(name, data, this.pid)
-        return this.data.children[label]
+        this.data.children[label] = kernel.scheduler.launchProcess(name, data, this.pid);
+        return this.data.children[label];
     }
 
     getChildProcessPid(label: string) {
@@ -90,7 +90,7 @@ export class Process {
         return kernel.scheduler.isPidActive(pid)
     }
 
-    launchCreepProcess(label: string, role: string, roomname: string, quantity = 1, options = {}) {
+    /*launchCreepProcess(label: string, role: string, roomname: string, quantity = 1, options = {}) {
         const room = Game.rooms[roomname]
         if (!room) {
             return false
@@ -109,18 +109,14 @@ export class Process {
                 'creep': creepName
             })
         }
-    }
-
-    getCluster(name: string, room: Room) {
-        return new qlib.Cluster(`${name}_${this.pid}`, room)
-    }
+    }*/
 
     period(interval: number, label = 'default') {
         if (!this.data.period) {
             this.data.period = {}
         }
 
-        const lastRun = this.data.period[label] || 0
+        const lastRun = this.data.period[label] || 0;
         if (lastRun < Game.time - interval) {
             this.data.period[label] = Game.time
             return true
@@ -141,4 +137,5 @@ export class Process {
         this.clean()
         this.main()
     }
+    abstract main(): void;
 }
