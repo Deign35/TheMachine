@@ -34,7 +34,7 @@ export class SwarmLogger {
     }
     private defaultLogGroup: string;
 
-    log(message: string, severity: number = 3, group?: string, tags: string[] = []) {
+    log(message: string, severity: string = '3', group?: string, tags: { [id: string]: any } = {}) {
         if (!group) {
             group = this.defaultLogGroup
         }
@@ -43,10 +43,6 @@ export class SwarmLogger {
             message = `[${Game.shard.name}] ${group}: ${message}`
         } else {
             message = `[${Game.shard.name}] ${message}`
-        }
-
-        if (severity >= LOG_ERROR) {
-            qlib.notify.send(message, 500)
         }
 
         if (Memory.loglevel && Memory.loglevel > severity) {
@@ -67,7 +63,7 @@ export class SwarmLogger {
         console.log(message)
     }
 
-    logData(data, severity, group) {
+    logData(data: any, severity: string, group?: string) {
         try {
             this.log(JSON.stringify(data), severity, group)
         } catch (err) {
@@ -75,13 +71,13 @@ export class SwarmLogger {
         }
     }
 
-    highlight(message) {
-        return this.log(message, 'highlight', false, {
+    highlight(message: string) {
+        return this.log(message, 'highlight', undefined, {
             'type': 'highlight'
         })
     }
 
-    highlightData(data) {
+    highlightData(data: any) {
         return this.highlight(JSON.stringify(data))
     }
 }

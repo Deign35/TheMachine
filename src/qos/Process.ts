@@ -1,6 +1,7 @@
 'use strict'
 
 export class Process {
+    priority?: number;
     constructor(public pid: number, public name: string, public data: any, public parent: string) {
     }
 

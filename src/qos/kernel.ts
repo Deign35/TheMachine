@@ -4,7 +4,6 @@
  * 
  */
 
-import * as Performance from "./Performance";
 import * as Process from "./Process";
 import * as Scheduler from "./Scheduler";
 
@@ -36,13 +35,11 @@ class SwarmKernel {
         this.newglobal = GLOBAL_LAST_RESET === Game.time
         this.simulation = !!Game.rooms['sim']
         this.scheduler = new Scheduler()
-        this.performance = new Performance()
         this.process = Process
     }
     private newglobal: boolean;
     private simulation: boolean;
     private scheduler: Scheduler;
-    private performance: Performance;
     private process: Process;
 
     start() {
@@ -56,8 +53,7 @@ class SwarmKernel {
         if (!Memory.qos.script_version || Memory.qos.script_version !== SCRIPT_VERSION) {
             Logger.log(`New script upload detected: ${SCRIPT_VERSION}`, LOG_WARN)
             Memory.qos.script_version = SCRIPT_VERSION
-            Memory.qos.script_upload = Game.time
-            this.performance.clear()
+            Memory.qos.script_upload = Game.time;
         }
 
         if (this.newglobal) {
@@ -123,12 +119,6 @@ class SwarmKernel {
                 Logger.log(`Running ${processName} (pid ${runningProcess.pid})`, LOG_TRACE, 'kernel')
                 const startCpu = Game.cpu.getUsed()
                 runningProcess.run()
-                let performanceName = runningProcess.name
-                const performanceDescriptor = runningProcess.getPerformanceDescriptor()
-                if (performanceDescriptor) {
-                    performanceName += ' ' + performanceDescriptor
-                }
-                this.performance.addProgramStats(performanceName, Game.cpu.getUsed() - startCpu)
             } catch (err) {
                 let message = 'program error occurred\n'
                 message += `process ${runningProcess.pid}: ${runningProcess.name}\n`
@@ -243,13 +233,6 @@ class SwarmKernel {
             const heap = Game.getHeapStatistics()
             const heapPercent = Math.round((heap.total_heap_size / heap.heap_size_limit) * 100)
             Logger.log(`Heap Used: ${heapPercent} (${heap.total_heap_size} / ${heap.heap_size_limit})`, LOG_INFO, 'kernel')
-        }
-
-        if (Game.time % 50 === 0) {
-            this.performance.reportHtml()
-        }
-        if (Game.time % 3000 === 0) {
-            this.performance.clear()
         }
     }
 }
