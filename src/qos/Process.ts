@@ -1,11 +1,7 @@
 'use strict'
 
-class Process {
-    constructor(pid, name, data, parent) {
-        this.pid = pid
-        this.name = name
-        this.data = data
-        this.parent = parent
+export class Process {
+    constructor(public pid: number, public name: string, public data: any, public parent: string) {
     }
 
     getPriority() {
