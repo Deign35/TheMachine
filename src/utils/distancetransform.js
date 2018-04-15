@@ -1,4 +1,9 @@
 /**
+ * Initial commit was copied from 
+ * https://github.com/ScreepsQuorum/screeps-quorum/tree/7254e727868fdc30e93b4e4dc8e015021d08a6ef
+ * 
+ */
+/**
     @param {PathFinder.CostMatrix} foregroundPixels - object pixels. modified for output
     @param {number} oob - value used for pixels outside image bounds
     @return {PathFinder.CostMatrix}

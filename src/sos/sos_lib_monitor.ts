@@ -1,3 +1,8 @@
+/**
+ * Initial commit was copied from 
+ * https://github.com/ScreepsQuorum/screeps-quorum/tree/7254e727868fdc30e93b4e4dc8e015021d08a6ef
+ * 
+ */
 export class Monitor {
     constructor() {
         this.maxbuckets = Math.ceil(this.maxage / this.resolution) + 1;

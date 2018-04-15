@@ -1,3 +1,8 @@
+/**
+ * Initial commit was copied from 
+ * https://github.com/ScreepsQuorum/screeps-quorum/tree/7254e727868fdc30e93b4e4dc8e015021d08a6ef
+ * 
+ */
 const colors = {
     gray: '#555555',
     light: '#AAAAAA',
@@ -157,8 +162,7 @@ RoomVisual.prototype.structure = function (x, y, type, opts = {}) {
                 fill: opts.dark,
                 stroke: false,
                 opacity: opts.opacity
-            })
-            {
+            }) {
                 let box = [
                     [-0.45, 0.3],
                     [-0.45, 0.55],
@@ -407,13 +411,19 @@ RoomVisual.prototype.animatedPosition = function (x, y, opts = {}) {
         rotate(0, -radius, s, c, x, y),
     ];
 
-    return this.poly(points, { stroke: color, opacity: opacity });
+    return this.poly(points, {
+        stroke: color,
+        opacity: opacity
+    });
 }
 
 function rotate(x, y, s, c, px, py) {
     let xDelta = x * c - y * s;
     let yDelta = x * s + y * c;
-    return { x: px + xDelta, y: py + yDelta };
+    return {
+        x: px + xDelta,
+        y: py + yDelta
+    };
 }
 
 

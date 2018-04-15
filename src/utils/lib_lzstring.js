@@ -1,4 +1,8 @@
-'use strict';
+/**
+ * Initial commit was copied from 
+ * https://github.com/ScreepsQuorum/screeps-quorum/tree/7254e727868fdc30e93b4e4dc8e015021d08a6ef
+ * 
+ */
 
 // Copyright (c) 2013 Pieroxy <pieroxy@pieroxy.net>
 // This work is free. You can redistribute it and/or modify it

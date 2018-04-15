@@ -1,3 +1,8 @@
+/**
+ * Initial commit was copied from 
+ * https://github.com/ScreepsQuorum/screeps-quorum/tree/7254e727868fdc30e93b4e4dc8e015021d08a6ef
+ * 
+ */
 let shardid: number = 0;
 if (Game.shard) {
     let matches = Game.shard.name.match(/\d+$/);
