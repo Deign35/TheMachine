@@ -1,7 +1,5 @@
-'use strict'
-
 export class Process {
-    priority?: number;
+    private priority?: number;
     constructor(public pid: number, public name: string, public data: any, public parent: string) {
     }
 
@@ -11,19 +9,19 @@ export class Process {
 
     clean() {
         if (this.data.children) {
-            let label
-            for (label in this.data.children) { // jshint ignore:line
-                if (!kernel.scheduler.isPidActive(this.data.children[label])) {
-                    delete this.data.children[label]
+            let keys = Object.keys(this.data.children);
+            for (let i = 0; i < keys.length; i++) { // jshint ignore:line
+                if (!kernel.scheduler.isPidActive(this.data.children[keys[i]])) {
+                    delete this.data.children[keys[i]]
                 }
             }
         }
 
         if (this.data.processes) {
-            let label
-            for (label in this.data.processes) { // jshint ignore:line
-                if (!kernel.scheduler.isPidActive(this.data.processes[label])) {
-                    delete this.data.processes[label]
+            let keys = Object.keys(this.data.processes);
+            for (let i = 0; i < keys.length; i++) { // jshint ignore:line
+                if (!kernel.scheduler.isPidActive(this.data.processes[keys[i]])) {
+                    delete this.data.processes[keys[i]]
                 }
             }
         }
@@ -33,11 +31,7 @@ export class Process {
         return false
     }
 
-    getPerformanceDescriptor() {
-        return false
-    }
-
-    launchChildProcess(label, name, data = {}) {
+    launchChildProcess(label: string, name: string, data = {}) {
         if (!this.data.children) {
             this.data.children = {}
         }
@@ -48,7 +42,7 @@ export class Process {
         return this.data.children[label]
     }
 
-    getChildProcessPid(label) {
+    getChildProcessPid(label: string) {
         if (!this.data.children) {
             return false
         }
@@ -58,7 +52,7 @@ export class Process {
         return this.data.children[label]
     }
 
-    isChildProcessRunning(label) {
+    isChildProcessRunning(label: string) {
         const pid = this.getChildProcessPid(label)
         if (!pid) {
             return false
@@ -66,7 +60,7 @@ export class Process {
         return kernel.scheduler.isPidActive(pid)
     }
 
-    launchProcess(label, name, data = {}) {
+    launchProcess(label: string, name: string, data = {}) {
         if (!this.data.processes) {
             this.data.processes = {}
         }
@@ -78,7 +72,7 @@ export class Process {
         return this.data.processes[label]
     }
 
-    getProcessPid(label) {
+    getProcessPid(label: string) {
         if (!this.data.processes) {
             return false
         }
@@ -88,7 +82,7 @@ export class Process {
         return this.data.processes[label]
     }
 
-    isProcessRunning(label) {
+    isProcessRunning(label: string) {
         const pid = this.getProcessPid(label)
         if (!pid) {
             return false
@@ -96,7 +90,7 @@ export class Process {
         return kernel.scheduler.isPidActive(pid)
     }
 
-    launchCreepProcess(label, role, roomname, quantity = 1, options = {}) {
+    launchCreepProcess(label: string, role: string, roomname: string, quantity = 1, options = {}) {
         const room = Game.rooms[roomname]
         if (!room) {
             return false
@@ -117,11 +111,11 @@ export class Process {
         }
     }
 
-    getCluster(name, room) {
+    getCluster(name: string, room: Room) {
         return new qlib.Cluster(`${name}_${this.pid}`, room)
     }
 
-    period(interval, label = 'default') {
+    period(interval: number, label = 'default') {
         if (!this.data.period) {
             this.data.period = {}
         }
@@ -135,7 +129,7 @@ export class Process {
         return false
     }
 
-    sleep(ticks) {
+    sleep(ticks: number) {
         kernel.scheduler.sleep(this.pid, ticks, true)
     }
 
@@ -148,5 +142,3 @@ export class Process {
         this.main()
     }
 }
-
-module.exports = Process

@@ -4,11 +4,13 @@
  * 
  */
 
-import * as Process from "./Process";
-import * as Scheduler from "./Scheduler";
-
+import { Process } from "./Process";
+import { Scheduler } from "./Scheduler";
+declare const BUCKET_EMERGENCY = 1000;
 global.BUCKET_EMERGENCY = 1000
+declare const BUCKET_FLOOR = 2000;
 global.BUCKET_FLOOR = 2000
+declare const BUCKET_CEILING = 9500;
 global.BUCKET_CEILING = 9500
 const BUCKET_BUILD_LIMIT = 15000
 const CPU_BUFFER = 130
@@ -25,7 +27,7 @@ const IVM = typeof Game.cpu.getHeapStatistics === 'function'
 
 declare var Memory: any;
 
-class SwarmKernel {
+class kernel {
     constructor() {
         global.kernel = this
 
@@ -35,25 +37,16 @@ class SwarmKernel {
         this.newglobal = GLOBAL_LAST_RESET === Game.time
         this.simulation = !!Game.rooms['sim']
         this.scheduler = new Scheduler()
-        this.process = Process
     }
     private newglobal: boolean;
     private simulation: boolean;
-    private scheduler: Scheduler;
-    private process: Process;
+    scheduler: Scheduler;
 
     start() {
         if (IVM) {
-            Logger.log(`Initializing Kernel for tick ${Game.time} with IVM support`, LOG_TRACE, 'kernel')
+            Logger.log(`Initializing Kernel for tick ${Game.time} with IVM support`, LOG_TRACE)
         } else {
-            Logger.log(`Initializing Kernel for tick ${Game.time}`, LOG_TRACE, 'kernel')
-        }
-
-        // Announce new uploads
-        if (!Memory.qos.script_version || Memory.qos.script_version !== SCRIPT_VERSION) {
-            Logger.log(`New script upload detected: ${SCRIPT_VERSION}`, LOG_WARN)
-            Memory.qos.script_version = SCRIPT_VERSION
-            Memory.qos.script_upload = Game.time;
+            Logger.log(`Initializing Kernel for tick ${Game.time}`, LOG_TRACE)
         }
 
         if (this.newglobal) {
@@ -61,20 +54,13 @@ class SwarmKernel {
         }
 
         if (IVM && global.gc && (!Memory.qos.gc || Game.time - Memory.qos.gc >= MIN_TICKS_BETWEEN_GC)) {
-            const heap = Game.getHeapStatistics()
+            const heap = Game.cpu.getHeapStatistics!()
             const heapPercent = heap.total_heap_size / heap.heap_size_limit
             if (heapPercent > 0.95) {
-                Logger.log(`Garbage Collection Initiated`, LOG_INFO, 'kernel')
+                Logger.log(`Garbage Collection Initiated`, LOG_INFO)
                 Memory.qos.gc = Game.time
                 global.gc()
             }
-        }
-
-        sos.lib.segments.moveToGlobalCache()
-        sos.lib.stormtracker.track()
-
-        if (sos.lib.stormtracker.isStorming()) {
-            Logger.log(`Reset Storm Detected`, LOG_INFO)
         }
 
         if (Game.time % 7 === 0) {
@@ -90,16 +76,14 @@ class SwarmKernel {
     }
 
     cleanMemory() {
-        Logger.log('Cleaning memory', LOG_TRACE, 'kernel')
+        Logger.log('Cleaning memory', LOG_TRACE)
         let i
         for (i in Memory.creeps) { // jshint ignore:line
             if (!Game.creeps[i]) {
                 delete Memory.creeps[i]
             }
         }
-
         sos.lib.cache.clean()
-        qlib.notify.clean()
     }
 
     run() {
@@ -108,7 +92,6 @@ class SwarmKernel {
             if (!runningProcess) {
                 return
             }
-            Logger.defaultLogGroup = runningProcess.name
             try {
                 let processName = runningProcess.name
                 const descriptor = runningProcess.getDescriptor()
@@ -116,7 +99,7 @@ class SwarmKernel {
                     processName += ' ' + descriptor
                 }
 
-                Logger.log(`Running ${processName} (pid ${runningProcess.pid})`, LOG_TRACE, 'kernel')
+                Logger.log(`Running ${processName} (pid ${runningProcess.pid})`, LOG_TRACE)
                 const startCpu = Game.cpu.getUsed()
                 runningProcess.run()
             } catch (err) {
@@ -125,15 +108,14 @@ class SwarmKernel {
                 message += !!err && !!err.stack ? err.stack : err.toString()
                 Logger.log(message, LOG_ERROR)
             }
-            Logger.defaultLogGroup = 'default'
         }
     }
 
-    sigmoid(x) {
+    sigmoid(x: number) {
         return 1.0 / (1.0 + Math.exp(-x))
     }
 
-    sigmoidSkewed(x) {
+    sigmoidSkewed(x: number) {
         return this.sigmoid((x * 12.0) - 6.0)
     }
 
@@ -187,6 +169,7 @@ class SwarmKernel {
         return false
     }
 
+    private _cpuLimit?: number;
     getCpuLimit() {
         if (Game.cpu.bucket > BUCKET_CEILING) {
             return Math.min(Game.cpu.tickLimit - CPU_BUFFER, Game.cpu.bucket * 0.05)
@@ -217,24 +200,20 @@ class SwarmKernel {
     }
 
     shutdown() {
-        sos.lib.vram.saveDirty()
-        sos.lib.segments.process()
 
         const processCount = this.scheduler.getProcessCount()
         const completedCount = this.scheduler.memory.processes.completed.length
 
-        Logger.log(`Processes Run: ${completedCount}/${processCount}`, LOG_INFO, 'kernel')
-        Logger.log(`Tick Limit: ${Game.cpu.tickLimit}`, LOG_INFO, 'kernel')
-        Logger.log(`Kernel Limit: ${this.getCpuLimit()}`, LOG_INFO, 'kernel')
-        Logger.log(`CPU Used: ${Game.cpu.getUsed()}`, LOG_INFO, 'kernel')
-        Logger.log(`Bucket: ${Game.cpu.bucket}`, LOG_INFO, 'kernel')
+        Logger.log(`Processes Run: ${completedCount}/${processCount}`, LOG_INFO)
+        Logger.log(`Tick Limit: ${Game.cpu.tickLimit}`, LOG_INFO)
+        Logger.log(`Kernel Limit: ${this.getCpuLimit()}`, LOG_INFO)
+        Logger.log(`CPU Used: ${Game.cpu.getUsed()}`, LOG_INFO)
+        Logger.log(`Bucket: ${Game.cpu.bucket}`, LOG_INFO)
 
         if (IVM) {
-            const heap = Game.getHeapStatistics()
+            const heap = Game.cpu.getHeapStatistics!()
             const heapPercent = Math.round((heap.total_heap_size / heap.heap_size_limit) * 100)
-            Logger.log(`Heap Used: ${heapPercent} (${heap.total_heap_size} / ${heap.heap_size_limit})`, LOG_INFO, 'kernel')
+            Logger.log(`Heap Used: ${heapPercent} (${heap.total_heap_size} / ${heap.heap_size_limit})`, LOG_INFO)
         }
     }
 }
-
-module.exports = QosKernel

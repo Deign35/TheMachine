@@ -5,34 +5,18 @@ const MAX_PRIORITY = 16
 const MAX_PID = 9999999
 const WALL = 9
 
-class Scheduler {
+export class Scheduler implements Scheduler {
+    memory: any;
+    processCache: any;
     constructor() {
-        if (!Memory.qos.scheduler) {
-            Memory.qos.scheduler = {}
-        }
         this.memory = Memory.qos.scheduler
-
         this.processCache = {}
-        if (!this.memory.processes) {
-            this.memory.processes = {
-                'index': {},
-                'running': false,
-                'completed': [],
-                'queues': {},
-                'sleep': {}
-            }
-        } else {
-            // For upgrading
-            if (!this.memory.processes.sleep) {
-                this.memory.processes.sleep = {}
-            }
-        }
     }
 
     wakeSleepingProcesses() {
         if (this.memory.processes.sleep.newProcesses) {
             // We remove processes from the completed list now because else the kernel wouldn't know that they were run
-            this.memory.processes.sleep.newProcesses.forEach(function (pid) {
+            this.memory.processes.sleep.newProcesses.forEach(function (pid: number) {
                 const i = kernel.scheduler.memory.processes.completed.indexOf(pid)
                 if (i > -1) {
                     kernel.scheduler.memory.processes.completed.splice(i, 1)
@@ -44,8 +28,9 @@ class Scheduler {
         if (this.memory.processes.sleep.nextCheck && this.memory.processes.sleep.nextCheck <= Game.time) {
             let sleepCount = 0
             // Resume the right processes
-            for (let pid in this.memory.processes.sleep.list) {
-                pid = Number(pid)
+            let keys = Object.keys(this.memory.processes.sleep.list);
+            for (let i = 0; i < keys.length; i++) {
+                let pid = +keys[i];
                 let tick = this.memory.processes.sleep.list[pid]
                 if (tick <= Game.time) {
                     this.wake(pid)
@@ -107,8 +92,9 @@ class Scheduler {
         // * prevent error prone combinations (such as two really high processes running back to back) from recurring,
         // * keep specific processes from being favored by the scheduler.
         const completed = _.shuffle(_.uniq(this.memory.processes.completed))
-        let pid
-        for (pid of completed) {
+        let keys = Object.keys(completed);
+        for (let i = 0; i < keys.length; i++) {
+            let pid = +keys[i];
             // If process is dead do not merge it back into the queue system.
             if (!this.memory.processes.index[pid]) {
                 continue
@@ -166,10 +152,10 @@ class Scheduler {
         }
 
         // Nothing was found
-        return false
+        return -1
     }
 
-    launchProcess(name, data = {}, parent = false) {
+    launchProcess(name: string, data = {}, parent: number = -1) {
         const pid = this.getNextPid()
         this.memory.processes.index[pid] = {
             n: name,
@@ -200,11 +186,11 @@ class Scheduler {
         }
     }
 
-    isPidActive(pid) {
+    isPidActive(pid: number) {
         return !!this.memory.processes.index[pid]
     }
 
-    kill(pid) {
+    kill(pid: number) {
         if (this.memory.processes.index[pid]) {
             // Process needs to be woken up first
             this.wake(pid)
@@ -212,13 +198,13 @@ class Scheduler {
         }
     }
 
-    sleep(pid, ticks, self = false) {
-        if ((typeof ticks) === 'number' && this.memory.processes.index[pid]) {
+    sleep(pid: number, ticks: number, self: boolean = false) {
+        if (this.memory.processes.index[pid]) {
             // Remove process from execution queue, but not if the process has called sleeping itself
             if (!self) {
-                for (let i in this.memory.processes.queues) {
-                    i = Number(i)
-                    let queue = this.memory.processes.queues[i]
+                let keys = Object.keys(this.memory.processes.queues);
+                for (let i = 0; i < keys.length; i++) {
+                    let queue = this.memory.processes.queues[keys[i]]
                     const index = queue.indexOf(pid)
                     if (index > -1) {
                         queue.splice(index, 1)
@@ -245,7 +231,7 @@ class Scheduler {
         }
     }
 
-    wake(pid) {
+    wake(pid: number) {
         if (this.memory.processes.index[pid] && this.memory.processes.sleep.list && this.memory.processes.sleep.list[pid]) {
             const priority = this.getPriorityForPid(pid)
             // Push the process back to the execution queue
@@ -263,7 +249,7 @@ class Scheduler {
         return this.memory.processes.completed.length
     }
 
-    getPriorityForPid(pid) {
+    getPriorityForPid(pid: number) {
         const program = this.getProcessForPid(pid)
         if (!program.getPriority) {
             return DEFAULT_PRIORITY
@@ -272,7 +258,7 @@ class Scheduler {
         return priority < MAX_PRIORITY ? priority : MAX_PRIORITY
     }
 
-    getProcessForPid(pid) {
+    getProcessForPid(pid: number) {
         if (!this.processCache[pid]) {
             const ProgramClass = this.getProgramClass(this.memory.processes.index[pid].n)
             this.processCache[pid] = new ProgramClass(pid,
@@ -284,9 +270,7 @@ class Scheduler {
         return this.processCache[pid]
     }
 
-    getProgramClass(program) {
+    getProgramClass(program: number) {
         return require(`programs_${program}`)
     }
 }
-
-module.exports = Scheduler

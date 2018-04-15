@@ -1,4 +1,12 @@
-Memory.qos.scheduler = {};
+Memory.qos.scheduler = {
+    processes: {
+        'index': {},
+        'running': false,
+        'completed': [],
+        'queues': {},
+        'sleep': {}
+    }
+};
 
 Memory.sos = {};
 Memory.sos.cache = {};
