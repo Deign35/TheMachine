@@ -15,23 +15,11 @@ export function counterGet(group: string) {
 }
 
 export function counterSet(group: string, value: number) {
-    if (!Memory.sos) {
-        Memory.sos = {}
-    }
-    if (!Memory.sos.counter) {
-        Memory.sos.counter = {}
-    }
     Memory.sos.counter[group] = value
     return value
 }
 
 export function counterReset(group: string) {
-    if (!Memory.sos) {
-        Memory.sos = {}
-    }
-    if (!Memory.sos.counter) {
-        Memory.sos.counter = {}
-    }
     if (Memory.sos.counter[group]) {
         delete Memory.sos.counter[group]
     }

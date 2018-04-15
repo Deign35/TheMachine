@@ -35,12 +35,6 @@ export class Monitor {
     }
 
     getPriorityRunStats(priority: number) {
-        let currbucket = this.resolution * Math.floor(Game.time / this.resolution)
-        let currticks = Game.time - currbucket
-        //let numticks = this.resolution * Math.ceil(numticks / this.resolution);
-        let numticks = this.resolution * Math.ceil(currticks / this.resolution)
-        let numbuckets = this.long / this.resolution
-
         if (!Memory.sos.monitor.priority_tbr[priority]) {
             return false
         }
@@ -48,6 +42,12 @@ export class Monitor {
         if (!Memory.sos.monitor.priority_ft[priority]) {
             return false
         }
+
+        let currbucket = this.resolution * Math.floor(Game.time / this.resolution)
+        let currticks = Game.time - currbucket
+        //let numticks = this.resolution * Math.ceil(numticks / this.resolution);
+        let numticks = this.resolution * Math.ceil(currticks / this.resolution);
+        let numbuckets = this.long / this.resolution
         if (Game.time - Memory.sos.monitor.priority_ft[priority] < (+numticks + +this.resolution)) {
             return false
         }

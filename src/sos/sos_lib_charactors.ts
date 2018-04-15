@@ -4,9 +4,10 @@
  * 
  */
 
-const alpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTYVWXYZ'
-const numbers = '0123456789'
-const symbols = '-_=+/?>,<[]{}\\|!@#$%^&*()_+:'
+const alpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTYVWXYZ';
+const numbers = '0123456789';
+const symbols = '-_=+/?>,<[]{}\\|!@#$%^&*()_+:';
+
 export const chars = {
     alpha: alpha,
     numbers: numbers,
