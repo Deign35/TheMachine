@@ -1,12 +1,4 @@
-
-function getTickRate () {
-
-  if(!Memory.sos) {
-    Memory.sos = {}
-  }
-  if(!Memory.sos.tickrate) {
-    Memory.sos.tickrate = {}
-  }
+export function getTickRate () {
 
   if(!Memory.sos.tickrate.stick || !Memory.sos.tickrate.stime) {
     resetTickTracker()
