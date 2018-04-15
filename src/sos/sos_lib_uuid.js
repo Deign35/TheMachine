@@ -30,7 +30,13 @@ var sos_lib_uuid = {
       this.tick = Game.time
     }
     this.index++
-    var base = Game.time.toString(36) + this.index.toString(36).leftPad(3, '0')
+    var indexString = this.index.toString(36)
+    if(indexString.length == 1) {
+      indexString = '00' + indexString
+    } else if(indexString.length == 2) {
+      indexString = '0' + indexString
+    }
+    var base = Game.time.toString(36) + indexString
     if(shardid !== false) {
       base = shardid + base
     }

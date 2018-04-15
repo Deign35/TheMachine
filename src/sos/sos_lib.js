@@ -19,4 +19,9 @@ let handler = {
     }
 };
 
-module.exports = new Proxy({}, handler);
+if (!global.sos) {
+  global.sos = {}
+}
+
+global.sos.lib = new Proxy({}, handler);
+module.exports = global.sos.lib

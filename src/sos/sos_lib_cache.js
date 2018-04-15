@@ -1,4 +1,5 @@
 'use strict';
+const lib_lzstring = (global.SOS_LIB_PREFIX ? global.SOS_LIB_PREFIX : '') + 'lib_lzstring'
 
 var cache = {}
 
@@ -159,6 +160,14 @@ cache.clean = function () {
     this.__cleankey(Memory.sos.cache, label)
   }
 
+  const globalKeys = Object.keys(this.__items)
+  for (const label of globalKeys) {
+    if(!!this.__items[label].exp) {
+      if(this.__items[label].exp < Game.time) {
+        delete this.__items[label]
+      }
+    }
+  }
 }
 
 cache.__cleankey = function (object, key) {
@@ -166,18 +175,16 @@ cache.__cleankey = function (object, key) {
   if(object[key].tick) {
     if(object[key].exp && object[key].exp < Game.time) {
       delete object[key]
-    }
-    if(object[key].lu && object[key].lu < Game.time) {
+    } else if(object[key].lu && object[key].lu < Game.time) {
       delete object[key]
     }
   } else {
     for(var label in object[key]) {
       if(object[key][label]) {
         if(object[key][label].tick) {
-          if(object[key][label].exp && object[key][label].exp < Game.time) {
+          if(object[key][label] && object[key][label].exp && object[key][label].exp < Game.time) {
             delete object[key][label]
-          }
-          if(object[key][label].lu && object[key][label].lu < Game.time) {
+          } else if(object[key][label] && object[key][label].lu && object[key][label].lu < Game.time) {
             delete object[key][label]
           }
         } else {
@@ -191,28 +198,26 @@ cache.__cleankey = function (object, key) {
   }
 }
 
-cache.getOrUpdate = function (label, opts, updateFunc) {
+cache.getOrUpdate = function (label, updateFunc, opts) {
   let result = cache.get(label, opts)
   if (result === undefined) {
     result = updateFunc()
-  }
-
-  if (result !== undefined) {
-    cache.set(label, opts, result)
+    if (result !== undefined) {
+      cache.set(label, result, opts)
+    }
   }
 
   return result
 }
 
-
 cache.__compress = function (value) {
-  var LZString = require('lib_lzstring')
+  var LZString = require(lib_lzstring)
   return LZString.compressToUTF16(JSON.stringify(value))
 }
 
 cache.__decompress = function (value) {
   try {
-    var LZString = require('lib_lzstring')
+    var LZString = require(lib_lzstring)
     var decompressed = LZString.decompressFromUTF16(value)
     var data = JSON.parse(decompressed)
     return data
