@@ -11,43 +11,56 @@ declare const LOG_INFO = 2;
 declare const LOG_DEBUG = 1;
 declare const LOG_TRACE = 0;
 
+declare type PID = number;
 
 declare var Logger: {
     log(message: string, severity?: number, tags?: { [id: string]: any }): void;
     logData(data: any, severity: string): void;
 }
 declare var kernel: {
-    scheduler: Scheduler;
+    scheduler: IScheduler;
     start(): void;
     cleanMemory(): void;
     run(): void;
     shutdown(): void;
 }
 
-declare class Scheduler {
+declare interface IScheduler {
     memory: any;
     processCache: any;
     wakeSleepingProcesses(): void;
     shift(): void;
-    getNextProcess(): number;
-    launchProcess(name: string, data: any, parent?: number): void;
-    getNextPid(): number;
-    isPidActive(pid: number): boolean;
-    kill(pid: number): void;
-    sleep(pid: number, ticks: number, self: boolean): void;
-    wake(pid: number): void;
+    getNextProcess(): PID;
+    launchProcess(name: string, data: any, parent?: PID): PID;
+    getNextPid(): PID;
+    isPidActive(pid: PID): boolean;
+    kill(pid: PID): void;
+    sleep(pid: PID, ticks: number, self: boolean): void;
+    wake(pid: PID): void;
     getProcessCount(): number;
     getCompletedProcessCount(): number;
-    getPriorityForPid(pid: number): number;
-    getProcessForPid(pid: number): any;
+    getPriorityForPid(pid: PID): number;
+    getProcessForPid(pid: PID): IProcess;
     getProgramClass(program: number): any;
 }
 
-declare class Process {
-    pid: number
+declare interface IProcess {
+    pid: PID
     name: string
     data: any
     parent: string
     getPriority(): number;
     getDescriptor(): string;
+    clean(): void;
+    launchChildProcess(label: string, name: string, data: any): PID;
+    getChildProcessPid(label: string): PID;
+    isChildProcessRunning(label: string): boolean;
+    launchProcess(label: string, name: string, data: any): PID;
+    getProcessPid(label: string): PID;
+    isProcessRunning(label: string): boolean;
+    period(interval: number, label: string): boolean;
+    sleep(ticks: number): void;
+    suicide(): void;
+    run(): void;
+    main(): void;
 }

@@ -1,6 +1,6 @@
-export abstract class Process {
+export abstract class Process implements IProcess {
     private priority?: number;
-    constructor(public pid: number, public name: string, public data: any, public parent: string) {
+    constructor(public pid: PID, public name: string, public data: any, public parent: string) {
     }
 
     getPriority() {
@@ -28,7 +28,7 @@ export abstract class Process {
     }
 
     getDescriptor() {
-        return false
+        return ""
     }
 
     launchChildProcess(label: string, name: string, data = {}) {
@@ -36,7 +36,8 @@ export abstract class Process {
             this.data.children = {}
         }
         if (this.data.children[label]) {
-            return true
+            //Maybe check if its asleep or something and reactivate it??
+            return this.data.children[label];
         }
         this.data.children[label] = kernel.scheduler.launchProcess(name, data, this.pid);
         return this.data.children[label];
@@ -66,7 +67,8 @@ export abstract class Process {
         }
 
         if (this.data.processes[label]) {
-            return true
+            //Maybe check if its asleep or something and reactivate it??
+            return this.data.processes[label];
         }
         this.data.processes[label] = kernel.scheduler.launchProcess(name, data)
         return this.data.processes[label]
@@ -130,7 +132,7 @@ export abstract class Process {
     }
 
     suicide() {
-        return kernel.scheduler.kill(this.pid)
+        kernel.scheduler.kill(this.pid)
     }
 
     run() {

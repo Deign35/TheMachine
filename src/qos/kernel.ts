@@ -6,12 +6,16 @@
 
 import { Process } from "./Process";
 import { Scheduler } from "./Scheduler";
+
 declare const BUCKET_EMERGENCY = 1000;
 global.BUCKET_EMERGENCY = 1000
+
 declare const BUCKET_FLOOR = 2000;
 global.BUCKET_FLOOR = 2000
+
 declare const BUCKET_CEILING = 9500;
 global.BUCKET_CEILING = 9500
+
 const BUCKET_BUILD_LIMIT = 15000
 const CPU_BUFFER = 130
 const CPU_MINIMUM = 0.30
@@ -30,17 +34,15 @@ declare var Memory: any;
 class kernel {
     constructor() {
         global.kernel = this
-
-        if (!Memory.SwarmOS) {
-            Memory.SwarmOS = {}
-        }
         this.newglobal = GLOBAL_LAST_RESET === Game.time
         this.simulation = !!Game.rooms['sim']
-        this.scheduler = new Scheduler()
+        this.scheduler = new Scheduler();
+        this.Process = Process;
     }
     private newglobal: boolean;
     private simulation: boolean;
     scheduler: Scheduler;
+    Process: typeof Process;
 
     start() {
         if (IVM) {
@@ -55,7 +57,7 @@ class kernel {
 
         if (IVM && global.gc && (!Memory.qos.gc || Game.time - Memory.qos.gc >= MIN_TICKS_BETWEEN_GC)) {
             const heap = Game.cpu.getHeapStatistics!()
-            const heapPercent = heap.total_heap_size / heap.heap_size_limit
+            const heapPercent = heap.total_heap_size / heap.heap_size_limit;
             if (heapPercent > 0.95) {
                 Logger.log(`Garbage Collection Initiated`, LOG_INFO)
                 Memory.qos.gc = Game.time
@@ -77,10 +79,10 @@ class kernel {
 
     cleanMemory() {
         Logger.log('Cleaning memory', LOG_TRACE)
-        let i
-        for (i in Memory.creeps) { // jshint ignore:line
-            if (!Game.creeps[i]) {
-                delete Memory.creeps[i]
+        let keys = Object.keys(Memory.Creeps);
+        for (let i = 0; i < keys.length; i++) {
+            if (!Game.creeps[keys[i]]) {
+                delete Memory.creeps[keys[i]]
             }
         }
         sos.lib.cache.clean()
@@ -92,6 +94,7 @@ class kernel {
             if (!runningProcess) {
                 return
             }
+            
             try {
                 let processName = runningProcess.name
                 const descriptor = runningProcess.getDescriptor()
@@ -99,8 +102,8 @@ class kernel {
                     processName += ' ' + descriptor
                 }
 
-                Logger.log(`Running ${processName} (pid ${runningProcess.pid})`, LOG_TRACE)
-                const startCpu = Game.cpu.getUsed()
+                Logger.log(`Running ${processName} (pid ${runningProcess.pid})`, LOG_TRACE);
+                const startCpu = Game.cpu.getUsed();
                 runningProcess.run()
             } catch (err) {
                 let message = 'program error occurred\n'
@@ -188,7 +191,9 @@ class kernel {
             const depthInRange = (Game.cpu.bucket - BUCKET_FLOOR) / bucketRange
             const minToAllocate = Game.cpu.limit * CPU_MINIMUM
             const maxToAllocate = Game.cpu.limit
-            this._cpuLimit = (minToAllocate + this.sigmoidSkewed(depthInRange) * (maxToAllocate - minToAllocate)) * (1 - CPU_ADJUST)
+            this._cpuLimit = (minToAllocate + this.sigmoidSkewed(depthInRange) *
+                (maxToAllocate - minToAllocate)) * (1 - CPU_ADJUST);
+            
             if (this.newglobal) {
                 this._cpuLimit += CPU_GLOBAL_BOOST
             } else if (RECURRING_BURST_FREQUENCY && Game.time % RECURRING_BURST_FREQUENCY === 0) {
@@ -200,7 +205,6 @@ class kernel {
     }
 
     shutdown() {
-
         const processCount = this.scheduler.getProcessCount()
         const completedCount = this.scheduler.memory.processes.completed.length
 

@@ -5,7 +5,7 @@ const MAX_PRIORITY = 16
 const MAX_PID = 9999999
 const WALL = 9
 
-export class Scheduler implements Scheduler {
+export class Scheduler implements IScheduler {
     memory: any;
     processCache: any;
     constructor() {
@@ -155,7 +155,7 @@ export class Scheduler implements Scheduler {
         return -1
     }
 
-    launchProcess(name: string, data = {}, parent: number = -1) {
+    launchProcess(name: string, data = {}, parent: number = -1): PID {
         const pid = this.getNextPid()
         this.memory.processes.index[pid] = {
             n: name,
@@ -170,7 +170,7 @@ export class Scheduler implements Scheduler {
         return pid
     }
 
-    getNextPid() {
+    getNextPid(): PID {
         if (!this.memory.lastPid) {
             this.memory.lastPid = 0
         }
@@ -186,11 +186,11 @@ export class Scheduler implements Scheduler {
         }
     }
 
-    isPidActive(pid: number) {
+    isPidActive(pid: PID) {
         return !!this.memory.processes.index[pid]
     }
 
-    kill(pid: number) {
+    kill(pid: PID) {
         if (this.memory.processes.index[pid]) {
             // Process needs to be woken up first
             this.wake(pid)
@@ -198,7 +198,7 @@ export class Scheduler implements Scheduler {
         }
     }
 
-    sleep(pid: number, ticks: number, self: boolean = false) {
+    sleep(pid: PID, ticks: number, self: boolean = false) {
         if (this.memory.processes.index[pid]) {
             // Remove process from execution queue, but not if the process has called sleeping itself
             if (!self) {
@@ -231,8 +231,9 @@ export class Scheduler implements Scheduler {
         }
     }
 
-    wake(pid: number) {
-        if (this.memory.processes.index[pid] && this.memory.processes.sleep.list && this.memory.processes.sleep.list[pid]) {
+    wake(pid: PID) {
+        if (this.memory.processes.index[pid] && this.memory.processes.sleep.list
+            && this.memory.processes.sleep.list[pid]) {
             const priority = this.getPriorityForPid(pid)
             // Push the process back to the execution queue
             this.memory.processes.queues[priority].push(pid)
@@ -252,7 +253,7 @@ export class Scheduler implements Scheduler {
     getPriorityForPid(pid: number) {
         const program = this.getProcessForPid(pid)
         if (!program.getPriority) {
-            return DEFAULT_PRIORITY
+            return DEFAULT_PRIORITY;
         }
         const priority = program.getPriority()
         return priority < MAX_PRIORITY ? priority : MAX_PRIORITY
