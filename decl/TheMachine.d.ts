@@ -41,7 +41,7 @@ declare interface IScheduler {
     getCompletedProcessCount(): number;
     getPriorityForPid(pid: PID): number;
     getProcessForPid(pid: PID): IProcess;
-    getProgramClass(program: number): any;
+    getProgramClass(program: string): any;
 }
 
 declare interface IProcess {

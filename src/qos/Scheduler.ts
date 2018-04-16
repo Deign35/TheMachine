@@ -1,4 +1,8 @@
-'use strict'
+/**
+ * Initial commit was copied from 
+ * https://github.com/ScreepsQuorum/screeps-quorum/tree/7254e727868fdc30e93b4e4dc8e015021d08a6ef
+ * 
+ */
 
 global.DEFAULT_PRIORITY = global.PRIORITIES_DEFAULT || 6
 const MAX_PRIORITY = 16
@@ -16,7 +20,7 @@ export class Scheduler implements IScheduler {
     wakeSleepingProcesses() {
         if (this.memory.processes.sleep.newProcesses) {
             // We remove processes from the completed list now because else the kernel wouldn't know that they were run
-            this.memory.processes.sleep.newProcesses.forEach(function (pid: number) {
+            this.memory.processes.sleep.newProcesses.forEach(function (pid: PID) {
                 const i = kernel.scheduler.memory.processes.completed.indexOf(pid)
                 if (i > -1) {
                     kernel.scheduler.memory.processes.completed.splice(i, 1)
@@ -119,8 +123,7 @@ export class Scheduler implements IScheduler {
         }
 
         // Iterate through the queues until a pid is found.
-        let x
-        for (x = 0; x <= MAX_PRIORITY; x++) {
+        for (let x = 0; x <= MAX_PRIORITY; x++) {
             if (x >= WALL) {
                 this.memory.processes.hitwall = true
             }
@@ -155,13 +158,16 @@ export class Scheduler implements IScheduler {
         return -1
     }
 
-    launchProcess(name: string, data = {}, parent: number = -1): PID {
+    launchProcess(name: string, data = {}, parent?: PID): PID {
         const pid = this.getNextPid()
         this.memory.processes.index[pid] = {
             n: name,
             d: data,
             p: parent
         }
+        /*if (parent > 0) {
+            this.memory.processes.index[pid].p = parent;
+        }*/
         const priority = this.getPriorityForPid(pid)
         if (!this.memory.processes.queues[priority]) {
             this.memory.processes.queues[priority] = []
@@ -171,14 +177,11 @@ export class Scheduler implements IScheduler {
     }
 
     getNextPid(): PID {
-        if (!this.memory.lastPid) {
-            this.memory.lastPid = 0
-        }
         while (true) {
-            this.memory.lastPid++
-            if (this.memory.lastPid > MAX_PID) {
-                this.memory.lastPid = 0
+            if (!this.memory.lastPid || this.memory.lastPid > MAX_PID) {
+                this.memory.lastPid = 0;
             }
+            this.memory.lastPid++
             if (this.memory.processes.index[this.memory.lastPid]) {
                 continue
             }
@@ -211,6 +214,7 @@ export class Scheduler implements IScheduler {
                     }
                 }
             }
+
             // Add process to list of new sleeping processes
             if (!this.memory.processes.sleep.newProcesses) {
                 this.memory.processes.sleep.newProcesses = []
@@ -250,7 +254,7 @@ export class Scheduler implements IScheduler {
         return this.memory.processes.completed.length
     }
 
-    getPriorityForPid(pid: number) {
+    getPriorityForPid(pid: PID) {
         const program = this.getProcessForPid(pid)
         if (!program.getPriority) {
             return DEFAULT_PRIORITY;
@@ -259,7 +263,7 @@ export class Scheduler implements IScheduler {
         return priority < MAX_PRIORITY ? priority : MAX_PRIORITY
     }
 
-    getProcessForPid(pid: number) {
+    getProcessForPid(pid: PID) {
         if (!this.processCache[pid]) {
             const ProgramClass = this.getProgramClass(this.memory.processes.index[pid].n)
             this.processCache[pid] = new ProgramClass(pid,
@@ -271,7 +275,8 @@ export class Scheduler implements IScheduler {
         return this.processCache[pid]
     }
 
-    getProgramClass(program: number) {
+    getProgramClass(program: string) {
+        // ()
         return require(`programs_${program}`)
     }
 }
