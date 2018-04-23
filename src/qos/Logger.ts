@@ -28,19 +28,19 @@ const ERROR_COLORS = [
 
 declare var Memory: any;
 export class Logger {
-    log(message: string, severity: number = 3, tags: { [id: string]: any } = {}) {
-        message = `[${severity}] ${message}`
+    log(message: string, severity: number = 3) {//, tags?: { [id: string]: any }) {
         if (Memory.loglevel && Memory.loglevel > severity) {
             return
         }
 
+        //message = `[${severity}] ${message}`
         let attributes = ''
-        let tag
+        /*let tag
         if (tags) {
             for (tag in tags) { // jshint ignore:line
                 attributes += ` ${tag}="${tags[tag]}"`
             }
-        }
+        }*/
         attributes += ` severity="${severity}"`
         attributes += ` tick="${Game.time}"`
         message = `<font color="${ERROR_COLORS[severity]}"${attributes}>${message}</font>`

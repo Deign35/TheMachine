@@ -3,9 +3,24 @@
  * https://github.com/ScreepsQuorum/screeps-quorum/tree/7254e727868fdc30e93b4e4dc8e015021d08a6ef
  * 
  */
+
+declare type ProcessData = {
+    children: { [id: string]: PID },
+    processes: { [id: string]: PID },
+    period: { [id: string]: number }
+}
 export abstract class Process implements IProcess {
     private priority?: number;
-    constructor(public pid: PID, public name: string, public data: any, public parent: string) {
+    constructor(public pid: PID, public name: string, public data: ProcessData, public parent?: string) {
+        if (!this.data.children) {
+            this.data.children = {}
+        }
+        if (!this.data.processes) {
+            this.data.processes = {}
+        }
+        if (!this.data.period) {
+            this.data.period = {}
+        }
     }
 
     getPriority() {
@@ -37,9 +52,6 @@ export abstract class Process implements IProcess {
     }
 
     launchChildProcess(label: string, name: string, data = {}) {
-        if (!this.data.children) {
-            this.data.children = {}
-        }
         if (this.data.children[label]) {
             //Maybe check if its asleep or something and reactivate it??
             return this.data.children[label];
@@ -50,10 +62,10 @@ export abstract class Process implements IProcess {
 
     getChildProcessPid(label: string) {
         if (!this.data.children) {
-            return false
+            return Invalid_PID;
         }
         if (!this.data.children[label]) {
-            return false
+            return Invalid_PID;
         }
         return this.data.children[label]
     }
@@ -67,10 +79,6 @@ export abstract class Process implements IProcess {
     }
 
     launchProcess(label: string, name: string, data = {}) {
-        if (!this.data.processes) {
-            this.data.processes = {}
-        }
-
         if (this.data.processes[label]) {
             //Maybe check if its asleep or something and reactivate it??
             return this.data.processes[label];
@@ -80,11 +88,8 @@ export abstract class Process implements IProcess {
     }
 
     getProcessPid(label: string) {
-        if (!this.data.processes) {
-            return false
-        }
         if (!this.data.processes[label]) {
-            return false
+            return Invalid_PID
         }
         return this.data.processes[label]
     }
@@ -119,10 +124,6 @@ export abstract class Process implements IProcess {
     }*/
 
     period(interval: number, label = 'default') {
-        if (!this.data.period) {
-            this.data.period = {}
-        }
-
         const lastRun = this.data.period[label] || 0;
         if (lastRun < Game.time - interval) {
             this.data.period[label] = Game.time

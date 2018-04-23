@@ -9,8 +9,29 @@ const MAX_PRIORITY = 16
 const MAX_PID = 9999999
 const WALL = 9
 
+declare type SchedulerMemory = {
+    lastPid: PID,
+    processes: {
+        completed: PID[],
+        hitwall: boolean,
+        index: {
+            [pid: number]: {
+                n: string,
+                d: Dictionary,
+                p?: PID,
+            }
+        },
+        queues: PID[][],
+        running?: PID,
+        sleep: {
+            list: { [pid: number]: number },
+            nextCheck: number,
+            newProcesses: PID[],//{ [id: string]: PID }
+        }
+    }
+}
 export class Scheduler implements IScheduler {
-    memory: any;
+    memory: SchedulerMemory;
     processCache: any;
     constructor() {
         this.memory = Memory.qos.scheduler
@@ -18,18 +39,17 @@ export class Scheduler implements IScheduler {
     }
 
     wakeSleepingProcesses() {
-        if (this.memory.processes.sleep.newProcesses) {
-            // We remove processes from the completed list now because else the kernel wouldn't know that they were run
-            this.memory.processes.sleep.newProcesses.forEach(function (pid: PID) {
-                const i = kernel.scheduler.memory.processes.completed.indexOf(pid)
-                if (i > -1) {
-                    kernel.scheduler.memory.processes.completed.splice(i, 1)
-                }
-            })
-            delete this.memory.processes.sleep.newProcesses
+        // We remove processes from the completed list now because else the kernel wouldn't know that they were run
+        let ids = Object.keys(this.memory.processes.sleep.newProcesses);
+        for (let i = 0; i < ids.length; i++) {
+            let pid = this.memory.processes.sleep.newProcesses[ids[i]];
+            let index = this.memory.processes.completed.indexOf(pid);
+            if (index > -1) {
+                this.memory.processes.completed.splice(index, 1);
+            }
         }
 
-        if (this.memory.processes.sleep.nextCheck && this.memory.processes.sleep.nextCheck <= Game.time) {
+        if (this.memory.processes.sleep.nextCheck <= Game.time) {
             let sleepCount = 0
             // Resume the right processes
             let keys = Object.keys(this.memory.processes.sleep.list);
@@ -89,7 +109,7 @@ export class Scheduler implements IScheduler {
         // Add processes that did run back into the system, including any "running" scripts that never completed
         if (this.memory.processes.running) {
             this.memory.processes.completed.push(this.memory.processes.running)
-            this.memory.processes.running = false
+            delete this.memory.processes.running
         }
 
         // Randomize order of completed processes before reinserting them to
@@ -119,7 +139,7 @@ export class Scheduler implements IScheduler {
         // Reset any "running" pids
         if (this.memory.processes.running) {
             this.memory.processes.completed.push(this.memory.processes.running)
-            this.memory.processes.running = false
+            delete this.memory.processes.running
         }
 
         // Iterate through the queues until a pid is found.
@@ -131,11 +151,13 @@ export class Scheduler implements IScheduler {
                 continue
             }
 
-            this.memory.processes.running = this.memory.processes.queues[x].shift()
+            this.memory.processes.running = this.memory.processes.queues[x].shift()!
 
             // Don't run this pid twice in a single tick.
-            if (this.memory.processes.completed.includes(this.memory.processes.running)) {
-                continue
+            for (let i = 0; i < this.memory.processes.completed.length; i++) {
+                if (this.memory.processes.completed[i] == this.memory.processes.running) {
+                    continue;
+                }
             }
 
             // If process doesn't exist anymore don't use it.
@@ -145,17 +167,17 @@ export class Scheduler implements IScheduler {
 
             // If process has a parent and the parent has died kill the child process.
             if (this.memory.processes.index[this.memory.processes.running].p) {
-                if (!this.isPidActive(this.memory.processes.index[this.memory.processes.running].p)) {
+                if (!this.isPidActive(this.memory.processes.index[this.memory.processes.running].p!)) {
                     this.kill(this.memory.processes.running)
                     continue
                 }
             }
 
-            return this.getProcessForPid(this.memory.processes.running)
+            return this.getProcessForPid(this.memory.processes.running!)
         }
 
         // Nothing was found
-        return -1
+        return Invalid_PID;
     }
 
     launchProcess(name: string, data = {}, parent?: PID): PID {
@@ -163,11 +185,10 @@ export class Scheduler implements IScheduler {
         this.memory.processes.index[pid] = {
             n: name,
             d: data,
-            p: parent
         }
-        /*if (parent > 0) {
+        if (parent && parent > 0) {
             this.memory.processes.index[pid].p = parent;
-        }*/
+        }
         const priority = this.getPriorityForPid(pid)
         if (!this.memory.processes.queues[priority]) {
             this.memory.processes.queues[priority] = []
@@ -236,8 +257,7 @@ export class Scheduler implements IScheduler {
     }
 
     wake(pid: PID) {
-        if (this.memory.processes.index[pid] && this.memory.processes.sleep.list
-            && this.memory.processes.sleep.list[pid]) {
+        if (this.memory.processes.index[pid] && this.memory.processes.sleep.list && this.memory.processes.sleep.list[pid]) {
             const priority = this.getPriorityForPid(pid)
             // Push the process back to the execution queue
             this.memory.processes.queues[priority].push(pid)
@@ -276,7 +296,6 @@ export class Scheduler implements IScheduler {
     }
 
     getProgramClass(program: string) {
-        // ()
         return require(`programs_${program}`)
     }
 }

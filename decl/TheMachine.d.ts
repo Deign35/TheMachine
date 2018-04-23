@@ -12,6 +12,7 @@ declare const LOG_DEBUG = 1;
 declare const LOG_TRACE = 0;
 
 declare type PID = number;
+declare const Invalid_PID = -1;
 
 declare var Logger: {
     log(message: string, severity?: number, tags?: { [id: string]: any }): void;
@@ -48,7 +49,7 @@ declare interface IProcess {
     pid: PID
     name: string
     data: any
-    parent: string
+    parent?: string
     getPriority(): number;
     getDescriptor(): string;
     clean(): void;
